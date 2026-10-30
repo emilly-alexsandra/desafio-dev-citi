@@ -40,23 +40,13 @@ export const deletePlanta = async (id: number) => {
 
 export const sellPlanta = async (id: number, quantidade: number) => {
   return await prisma.$transaction(async (tx) => {
-    const planta = await tx.planta.findUnique({
-      where: { id },
-    });
-
-    if (!planta) {
-      return { tipo: "nao_encontrada" as const };
-    }
-
-    if (planta.estoque < quantidade) {
-      return {
-        tipo: "estoque_insuficiente" as const,
-        estoqueDisponivel: planta.estoque,
-      };
-    }
-
-    const plantaAtualizada = await tx.planta.update({
-      where: { id },
+    const atualizacao = await tx.planta.updateMany({
+      where: {
+        id,
+        estoque: {
+          gte: quantidade,
+        },
+      },
       data: {
         estoque: {
           decrement: quantidade,
@@ -64,14 +54,35 @@ export const sellPlanta = async (id: number, quantidade: number) => {
       },
     });
 
+    if (atualizacao.count === 0) {
+      const planta = await tx.planta.findUnique({
+        where: { id },
+      });
+
+      if (!planta) {
+        return { tipo: "nao_encontrada" as const };
+      }
+
+      return {
+        tipo: "estoque_insuficiente" as const,
+        estoqueDisponivel: planta.estoque,
+      };
+    }
+
+    const plantaAtualizada = await tx.planta.findUnique({
+      where: { id },
+    });
+
+    if (!plantaAtualizada) {
+      return { tipo: "nao_encontrada" as const };
+    }
+
     return {
       tipo: "sucesso" as const,
       planta: plantaAtualizada,
     };
   });
 };
-
-
 
 export const getValorTotalEstoque = async () => {
   const plantas = await prisma.planta.findMany({
@@ -96,4 +107,3 @@ export const getValorTotalEstoque = async () => {
     totalDeVasos,
   };
 };
-
