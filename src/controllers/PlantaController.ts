@@ -273,9 +273,9 @@ export const sellPlanta = async (req: Request, res: Response) => {
     }
 
     if (resultado.tipo === "estoque_insuficiente") {
-      return res.status(409).json({
-        message: "Estoque insuficiente.",
-        estoqueDisponivel: resultado.estoqueDisponivel,
+      return res.status(400).json({
+      message: "Estoque insuficiente.",
+      estoqueDisponivel: resultado.estoqueDisponivel,
       });
     }
 
@@ -290,17 +290,15 @@ export const sellPlanta = async (req: Request, res: Response) => {
   }
 };
 
+
 export const readValorTotalEstoque = async (
   req: Request,
   res: Response,
 ) => {
   try {
-    const valorTotal = await PlantaRepository.getValorTotalEstoque();
+    const resultado = await PlantaRepository.getValorTotalEstoque();
 
-    return res.status(200).json({
-      valorTotal,
-      moeda: "BRL",
-    });
+    return res.status(200).json(resultado);
   } catch (error) {
     console.error(error);
     return res.status(500).json({
