@@ -1,102 +1,113 @@
 # 🌿 Folhagem & Cia — API de Gerenciamento de Plantas
 
-API REST desenvolvida em Node.js e TypeScript para gerenciar o catálogo de plantas, controlar o estoque e registrar vendas da loja fictícia **Folhagem & Cia**.
+API REST desenvolvida com **Node.js, TypeScript, Express, Prisma e PostgreSQL** para gerenciamento de plantas, controle de estoque e registro de vendas.
 
-O projeto foi desenvolvido como desafio técnico para praticar desenvolvimento backend, organização em camadas, integração com banco de dados e criação de endpoints REST.
+O projeto foi desenvolvido como parte do desafio técnico do CITi (Centro Integrado de Tecnologia da Informação) — UFPE.
 
-## 🚀 Tecnologias utilizadas
+## 📌 Funcionalidades
 
-- **Node.js** — ambiente de execução JavaScript.
-- **TypeScript** — tipagem estática.
-- **Express** — criação da API REST.
-- **Prisma ORM** — comunicação com o banco de dados.
-- **PostgreSQL** — banco de dados relacional.
-- **Docker** — execução do ambiente de banco de dados.
-- **Yarn** — gerenciamento de dependências.
+- Cadastro de plantas.
+- Listagem de plantas.
+- Busca de plantas por ID.
+- Atualização parcial das informações de plantas.
+- Exclusão de plantas.
+- Filtragem por luminosidade e característica pet friendly.
+- Registro de vendas com atualização automática do estoque.
+- Validação da disponibilidade antes da venda.
+- Cálculo do valor total do estoque.
+- Proteção contra vendas simultâneas que ultrapassem o estoque disponível.
+
+## 🛠️ Tecnologias utilizadas
+
+- Node.js
+- TypeScript
+- Express
+- Prisma ORM
+- PostgreSQL
+- Docker
+- Yarn
 
 ## 📋 Pré-requisitos
 
-Antes de começar, você precisará ter instalado:
+Antes de executar o projeto, é necessário ter instalado:
 
 - [Node.js](https://nodejs.org/)
-- [Yarn](https://yarnpkg.com/)
+- [Yarn](https://classic.yarnpkg.com/)
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/)
-- [Git](https://git-scm.com/)
 
-## ⚙️ Como executar o projeto
+## ⚙️ Configuração e instalação
 
-### 1. Clone o repositório
+### 1. Clonar o repositório
 
 ```bash
 git clone https://github.com/emilly-alexsandra/desafio-dev-citi.git
-```
-
-### 2. Acesse a pasta do projeto
-
-```bash
 cd desafio-dev-citi
 ```
 
-### 3. Instale as dependências
+### 2. Configurar as variáveis de ambiente
 
-```bash
-yarn
-```
+Crie um arquivo `.env` na raiz do projeto.
 
-### 4. Configure as variáveis de ambiente
-
-Crie um arquivo `.env` na raiz do projeto e configure a variável de conexão com o PostgreSQL conforme o ambiente local.
-
-Exemplo:
+Exemplo de configuração:
 
 ```env
-DATABASE_URL="postgresql://postgres:postgres@localhost:5432/folhagem_cia?schema=public"
+PROJECT_NAME=treinamento-crud
+SERVER_PORT=3001
+
+DATABASE_TYPE=postgres
+DATABASE_HOST=treinamento-crud-db
+DATABASE_PORT=5432
+DATABASE_USER=postgres
+DATABASE_PASSWORD=sua_senha
+DATABASE_DB=treinamento-crud
+
+DATABASE_URL=${DATABASE_TYPE}://${DATABASE_USER}:${DATABASE_PASSWORD}@${DATABASE_HOST}:${DATABASE_PORT}/${DATABASE_DB}
 ```
 
-Ajuste usuário, senha, porta e nome do banco de dados de acordo com a configuração do Docker Compose do projeto.
+A variável `DATABASE_URL` é utilizada pelo Prisma para estabelecer a conexão com o PostgreSQL e é montada a partir das demais variáveis de ambiente.
 
-### 5. Inicie o banco de dados
+**Importante:** o arquivo `.env` contém configurações locais e credenciais de acesso. Ele não deve ser enviado ao repositório.
+
+### 3. Iniciar os containers
 
 Com o Docker Desktop aberto, execute:
 
 ```bash
-docker compose up -d
+docker compose up -d --build
 ```
 
-### 6. Execute as migrations
+Esse comando constrói a imagem da aplicação e inicia os containers da API e do PostgreSQL.
+
+### 4. Executar as migrations
+
+No terminal do projeto, execute:
 
 ```bash
 yarn migration
 ```
 
-### 7. Inicie a aplicação
+Esse comando cria e aplica as migrations do banco de dados em ambiente de desenvolvimento.
 
-Utilize o comando de desenvolvimento configurado no projeto:
+Após a inicialização, a API estará disponível em:
 
-```bash
-yarn dev
-```
+`http://localhost:3001`
 
-A API estará disponível em:
+## 🌱 Modelo de dados — Planta
 
-```text
-http://localhost:3001
-```
+| Campo | Tipo | Descrição |
+|---|---|---|
+| id | Int | Identificador único |
+| nome | String | Nome da planta |
+| especie | String | Espécie da planta |
+| preco | Int | Preço em centavos |
+| estoque | Int | Quantidade disponível |
+| luminosidade | Luminosidade | Necessidade de luz |
+| petFriendly | Boolean | Indica se é segura para animais |
+| regaACadaDias | Int | Intervalo de rega em dias |
+| createdAt | DateTime | Data de criação |
+| updatedAt | DateTime | Data da última atualização |
 
-## 🌱 Modelo de dados
-
-O sistema utiliza o modelo **Planta**, que representa os produtos disponíveis na loja.
-
-Entre os atributos utilizados estão:
-
-- `id`: identificador da planta.
-- `nome`: nome da planta.
-- `precoEmCentavos`: preço da planta em centavos.
-- `quantidadeEmEstoque`: quantidade disponível.
-- `luminosidade`: condição de luminosidade necessária.
-- `petFriendly`: indica se a planta é segura para ambientes com animais domésticos.
-
-### Tipos de luminosidade
+### Valores de luminosidade
 
 O campo `luminosidade` aceita os seguintes valores:
 
@@ -104,27 +115,29 @@ O campo `luminosidade` aceita os seguintes valores:
 - `MEIA_SOMBRA`
 - `SOL_PLENO`
 
-## 📌 Endpoints
+## 🔗 Endpoints
 
-A API disponibiliza operações para cadastro, consulta, atualização, remoção e venda de plantas.
+Base URL: `http://localhost:3001`
 
-### 1. Cadastrar uma planta
+### 1. Cadastrar planta
 
 **POST** `/plantas`
 
-Cadastra uma nova planta no catálogo.
-
-Exemplo de corpo da requisição:
+Exemplo de requisição:
 
 ```json
 {
-  "nome": "Jiboia",
-  "precoEmCentavos": 3000,
-  "quantidadeEmEstoque": 10,
+  "nome": "Costela-de-Adão",
+  "especie": "Monstera deliciosa",
+  "preco": 5000,
+  "estoque": 10,
   "luminosidade": "MEIA_SOMBRA",
-  "petFriendly": false
+  "petFriendly": false,
+  "regaACadaDias": 7
 }
 ```
+
+Todos os campos são obrigatórios no cadastro.
 
 ### 2. Listar plantas
 
@@ -132,15 +145,15 @@ Exemplo de corpo da requisição:
 
 Retorna a lista de plantas cadastradas.
 
-Também permite filtrar os resultados por luminosidade e compatibilidade com animais domésticos.
+Também permite filtrar por luminosidade e característica pet friendly.
 
 Exemplos:
 
-```text
+```http
 GET /plantas?luminosidade=MEIA_SOMBRA
 ```
 
-```text
+```http
 GET /plantas?petFriendly=false
 ```
 
@@ -148,155 +161,161 @@ GET /plantas?petFriendly=false
 
 **GET** `/plantas/:id`
 
-Retorna os dados de uma planta específica.
-
 Exemplo:
 
-```text
+```http
 GET /plantas/1
 ```
 
-### 4. Atualizar uma planta
+### 4. Atualizar planta
 
 **PATCH** `/plantas/:id`
 
-Atualiza os dados de uma planta cadastrada.
+Permite atualizar parcialmente os dados de uma planta.
 
-Exemplo de corpo da requisição:
+Exemplo de requisição:
 
 ```json
 {
-  "nome": "Jiboia Verde",
-  "precoEmCentavos": 3500
+  "preco": 6000,
+  "estoque": 15
 }
 ```
 
-### 5. Remover uma planta
+### 5. Excluir planta
 
 **DELETE** `/plantas/:id`
 
-Remove uma planta do catálogo.
-
 Exemplo:
 
-```text
+```http
 DELETE /plantas/1
 ```
 
-### 6. Registrar uma venda
+### 6. Registrar venda
 
 **POST** `/plantas/:id/venda`
 
-Registra a venda de uma determinada quantidade de vasos e atualiza o estoque automaticamente.
-
-Exemplo:
-
-```text
-POST /plantas/1/venda
-```
-
-Corpo da requisição:
+Exemplo de requisição:
 
 ```json
 {
-  "quantidade": 5
+  "quantidade": 2
 }
 ```
 
-A operação verifica se existe estoque suficiente antes de efetuar a venda. Caso a quantidade solicitada seja maior que a disponível, a API retorna erro e mantém o estoque inalterado.
+A venda verifica a disponibilidade em estoque e atualiza a quantidade automaticamente.
 
-### 7. Consultar o valor total do estoque
+Em caso de venda realizada, a resposta informa a planta atualizada e a quantidade vendida.
+
+Caso o estoque seja insuficiente, a API retorna HTTP 400.
+
+### 7. Consultar valor total do estoque
 
 **GET** `/plantas/estoque/valor-total`
 
-Retorna o valor total do estoque em centavos e a quantidade total de vasos disponíveis.
+Retorna o valor financeiro total do estoque e a quantidade total de vasos disponíveis.
 
 Exemplo de resposta:
 
 ```json
 {
-  "valorTotalEmCentavos": 15000,
-  "totalDeVasos": 5
+  "valorTotalEmCentavos": 50000,
+  "totalDeVasos": 10
 }
 ```
 
+O valor total é calculado pela soma do preço de cada planta multiplicado pela respectiva quantidade em estoque.
+
 ## ⚠️ Validações e tratamento de erros
 
-A API realiza validações para manter a consistência dos dados, incluindo:
+A API realiza validações para garantir a integridade dos dados:
 
-- Verificação dos campos obrigatórios no cadastro.
-- Validação dos valores informados para luminosidade.
-- Validação de preços e quantidades.
-- Verificação da existência da planta nas operações que exigem um ID.
-- Impedimento de vendas com quantidade inválida ou estoque insuficiente.
-- Tratamento de erros nas operações com o banco de dados.
+- Todos os campos são obrigatórios no cadastro.
+- O preço deve ser maior que zero.
+- O estoque não pode ser negativo.
+- O intervalo de rega deve ser maior ou igual a um dia.
+- A luminosidade deve corresponder a um dos valores definidos no enum.
+- A quantidade de uma venda deve ser um número inteiro positivo.
+- Não é permitido vender uma quantidade superior ao estoque disponível.
+- IDs inexistentes são tratados pela API.
 
-### Principais códigos HTTP utilizados
+### Principais códigos HTTP
 
 | Código | Significado |
 |---|---|
-| `200` | Requisição realizada com sucesso. |
-| `201` | Recurso criado com sucesso. |
-| `204` | Recurso removido com sucesso, sem conteúdo na resposta. |
-| `400` | Dados inválidos ou estoque insuficiente. |
-| `404` | Planta não encontrada. |
-| `500` | Erro interno do servidor. |
+| 200 | Operação realizada com sucesso |
+| 201 | Recurso criado com sucesso |
+| 400 | Dados inválidos ou estoque insuficiente |
+| 404 | Recurso não encontrado |
+| 500 | Erro interno do servidor |
 
-## 🧪 Testando a API
+## 🔒 Controle de concorrência
 
-As rotas podem ser testadas utilizando ferramentas como:
+O registro de vendas utiliza uma operação atômica de atualização do estoque com Prisma.
 
-- [Thunder Client](https://www.thunderclient.com/)
-- [Postman](https://www.postman.com/)
+A atualização ocorre somente quando a quantidade disponível é suficiente para atender à venda.
 
-Com a aplicação em execução, utilize a URL base:
+Essa abordagem evita que requisições simultâneas vendam mais unidades do que existem em estoque.
 
-```text
-http://localhost:3001
-```
+### Teste de concorrência realizado
 
-Envie as requisições HTTP de acordo com os endpoints apresentados nesta documentação.
+Considerando uma planta com estoque inicial de 5 unidades, foram disparadas simultaneamente duas requisições de venda de 4 unidades cada.
+
+Resultado validado:
+
+- Primeira venda: HTTP 200.
+- Segunda venda: HTTP 400 — estoque insuficiente.
+- Estoque final: 1 unidade.
 
 ## 📁 Estrutura do projeto
 
 ```text
 desafio-dev-citi/
+│
 ├── prisma/
 │   ├── migrations/
 │   └── schema.prisma
+│
 ├── src/
 │   ├── controllers/
 │   │   ├── PlantaController.ts
 │   │   └── UserController.ts
+│   │
+│   ├── database/
+│   │   └── index.ts
+│   │
 │   ├── repositories/
 │   │   ├── PlantaRepository.ts
 │   │   └── UserRepository.ts
-│   ├── database/
-│   │   └── index.ts
+│   │
 │   ├── routes.ts
 │   └── server.ts
-├── .env
+│
+├── .env.example
 ├── .gitignore
+├── Dockerfile
 ├── docker-compose.yml
 ├── package.json
 ├── tsconfig.json
 └── README.md
 ```
 
-## 🏗️ Organização da aplicação
+## 🧪 Scripts disponíveis
 
-O projeto segue uma arquitetura em camadas, separando as responsabilidades:
+| Comando | Descrição |
+|---|---|
+| `yarn dev` | Inicia o ambiente de desenvolvimento |
+| `yarn generate` | Gera o Prisma Client |
+| `yarn migration` | Executa migrations em desenvolvimento |
+| `yarn migration:deploy` | Aplica migrations existentes |
+| `yarn studio` | Abre o Prisma Studio |
+| `yarn typecheck` | Verifica os tipos do TypeScript |
+| `yarn build` | Compila a aplicação |
+| `yarn start` | Inicia a aplicação compilada |
 
-- **Routes:** define os endpoints e direciona as requisições.
-- **Controllers:** recebe as requisições HTTP, processa as informações e retorna as respostas.
-- **Repositories:** concentra a comunicação e as operações com o banco de dados.
-- **Database:** centraliza a conexão com o banco de dados por meio do Prisma.
+No Windows PowerShell, os comandos Yarn podem ser executados com o prefixo `yarn.cmd`.
 
-Essa organização facilita a manutenção, a reutilização de código e a evolução da aplicação.
+## 👩‍💻 Autoria
 
----
-
-Desenvolvido como parte do desafio técnico do **CITi — Centro Integrado de Tecnologia da Informação**.
-
-**Autora:** Emilly Alexsandra  
-**Repositório:** [desafio-dev-citi](https://github.com/emilly-alexsandra/desafio-dev-citi)
+Desenvolvido por **Emilly Alexsandra** como parte do desafio técnico do CITi — UFPE.
