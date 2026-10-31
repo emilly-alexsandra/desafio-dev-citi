@@ -1,14 +1,14 @@
 
 import { Request, Response } from "express";
+import { Luminosidade } from "@prisma/client";
 import * as PlantaRepository from "@repositories/PlantaRepository";
 
-type Luminosidade = "SOMBRA" | "MEIA_SOMBRA" | "SOL_PLENO";
-
-const luminosidadesValidas = [
-  "SOMBRA",
-  "MEIA_SOMBRA",
-  "SOL_PLENO",
-] as const;
+const isLuminosidade = (valor: unknown): valor is Luminosidade => {
+  return (
+    typeof valor === "string" &&
+    Object.values(Luminosidade).includes(valor as Luminosidade)
+  );
+};
 
 export const createPlanta = async (req: Request, res: Response) => {
   try {
@@ -20,14 +20,14 @@ export const createPlanta = async (req: Request, res: Response) => {
       luminosidade,
       petFriendly,
       regaACadaDias,
-    } = req.body;
+    } = req.body ?? {};
 
     if (
       typeof nome !== "string" || !nome.trim() ||
       typeof especie !== "string" || !especie.trim() ||
       !Number.isInteger(preco) || preco <= 0 ||
       !Number.isInteger(estoque) || estoque < 0 ||
-      !luminosidadesValidas.includes(luminosidade) ||
+      !isLuminosidade(luminosidade) ||
       typeof petFriendly !== "boolean" ||
       !Number.isInteger(regaACadaDias) || regaACadaDias <= 0
     ) {
@@ -65,16 +65,13 @@ export const readAllPlantas = async (req: Request, res: Response) => {
     const { luminosidade, petFriendly } = req.query;
 
     if (luminosidade !== undefined) {
-      if (
-        typeof luminosidade !== "string" ||
-        !luminosidadesValidas.includes(luminosidade as Luminosidade)
-      ) {
+      if (!isLuminosidade(luminosidade)) {
         return res.status(400).json({
           message: "Luminosidade inválida.",
         });
       }
 
-      filters.luminosidade = luminosidade as Luminosidade;
+      filters.luminosidade = luminosidade;
     }
 
     if (petFriendly !== undefined) {
@@ -103,7 +100,9 @@ export const readPlantaById = async (req: Request, res: Response) => {
     const id = Number(req.params.id);
 
     if (!Number.isInteger(id) || id <= 0) {
-      return res.status(400).json({ message: "ID inválido." });
+      return res.status(400).json({
+        message: "ID inválido.",
+      });
     }
 
     const planta = await PlantaRepository.findPlantaById(id);
@@ -128,7 +127,9 @@ export const updatePlanta = async (req: Request, res: Response) => {
     const id = Number(req.params.id);
 
     if (!Number.isInteger(id) || id <= 0) {
-      return res.status(400).json({ message: "ID inválido." });
+      return res.status(400).json({
+        message: "ID inválido.",
+      });
     }
 
     const plantaExistente = await PlantaRepository.findPlantaById(id);
@@ -147,7 +148,7 @@ export const updatePlanta = async (req: Request, res: Response) => {
       luminosidade,
       petFriendly,
       regaACadaDias,
-    } = req.body;
+    } = req.body ?? {};
 
     const data: {
       nome?: string;
@@ -161,7 +162,9 @@ export const updatePlanta = async (req: Request, res: Response) => {
 
     if (nome !== undefined) {
       if (typeof nome !== "string" || !nome.trim()) {
-        return res.status(400).json({ message: "Nome inválido." });
+        return res.status(400).json({
+          message: "Nome inválido.",
+        });
       }
 
       data.nome = nome.trim();
@@ -169,7 +172,9 @@ export const updatePlanta = async (req: Request, res: Response) => {
 
     if (especie !== undefined) {
       if (typeof especie !== "string" || !especie.trim()) {
-        return res.status(400).json({ message: "Espécie inválida." });
+        return res.status(400).json({
+          message: "Espécie inválida.",
+        });
       }
 
       data.especie = especie.trim();
@@ -177,7 +182,9 @@ export const updatePlanta = async (req: Request, res: Response) => {
 
     if (preco !== undefined) {
       if (!Number.isInteger(preco) || preco <= 0) {
-        return res.status(400).json({ message: "Preço inválido." });
+        return res.status(400).json({
+          message: "Preço inválido.",
+        });
       }
 
       data.preco = preco;
@@ -185,23 +192,22 @@ export const updatePlanta = async (req: Request, res: Response) => {
 
     if (estoque !== undefined) {
       if (!Number.isInteger(estoque) || estoque < 0) {
-        return res.status(400).json({ message: "Estoque inválido." });
+        return res.status(400).json({
+          message: "Estoque inválido.",
+        });
       }
 
       data.estoque = estoque;
     }
 
     if (luminosidade !== undefined) {
-      if (
-        typeof luminosidade !== "string" ||
-        !luminosidadesValidas.includes(luminosidade as Luminosidade)
-      ) {
+      if (!isLuminosidade(luminosidade)) {
         return res.status(400).json({
           message: "Luminosidade inválida.",
         });
       }
 
-      data.luminosidade = luminosidade as Luminosidade;
+      data.luminosidade = luminosidade;
     }
 
     if (petFriendly !== undefined) {
@@ -246,7 +252,9 @@ export const deletePlanta = async (req: Request, res: Response) => {
     const id = Number(req.params.id);
 
     if (!Number.isInteger(id) || id <= 0) {
-      return res.status(400).json({ message: "ID inválido." });
+      return res.status(400).json({
+        message: "ID inválido.",
+      });
     }
 
     const planta = await PlantaRepository.findPlantaById(id);
@@ -271,7 +279,7 @@ export const deletePlanta = async (req: Request, res: Response) => {
 export const sellPlanta = async (req: Request, res: Response) => {
   try {
     const id = Number(req.params.id);
-    const { quantidade } = req.body;
+    const { quantidade } = req.body ?? {};
 
     if (!Number.isInteger(id) || id <= 0) {
       return res.status(400).json({
