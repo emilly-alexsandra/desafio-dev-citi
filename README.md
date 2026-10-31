@@ -1,135 +1,127 @@
 # 🌿 Folhagem & Cia — API de Gerenciamento de Plantas
 
-API REST desenvolvida com **Node.js, TypeScript, Express, Prisma e PostgreSQL** para gerenciamento de plantas, controle de estoque e registro de vendas.
+API REST desenvolvida em **Node.js, TypeScript, Express, Prisma e PostgreSQL** para gerenciar plantas, controlar o estoque e registrar vendas. Substitui a planilha da loja, evitando situações como vender uma planta que já não existe no estoque.
 
-O projeto foi desenvolvido como parte do desafio técnico do CITi (Centro Integrado de Tecnologia da Informação) — UFPE.
+Projeto desenvolvido como parte do desafio técnico do CITi — Centro Integrado de Tecnologia da Informação.
 
-## 📌 Funcionalidades
+## 🚀 Funcionalidades
 
-- Cadastro de plantas.
-- Listagem de plantas.
-- Busca de plantas por ID.
-- Atualização parcial das informações de plantas.
-- Exclusão de plantas.
-- Filtragem por luminosidade e característica pet friendly.
+- CRUD completo de plantas.
+- Listagem com filtros opcionais por luminosidade e compatibilidade com pets, sozinhos ou combinados.
+- Validação dos dados enviados (cadastro, edição, filtros e venda).
 - Registro de vendas com atualização automática do estoque.
-- Validação da disponibilidade antes da venda.
-- Cálculo do valor total do estoque.
-- Proteção contra vendas simultâneas que ultrapassem o estoque disponível.
+- Proteção contra estoque negativo e vendas simultâneas.
+- Cálculo do valor total do estoque e da quantidade total de vasos.
 
-## 🛠️ Tecnologias utilizadas
+## 🛠️ Tecnologias
 
-- Node.js
-- TypeScript
-- Express
-- Prisma ORM
-- PostgreSQL
-- Docker
-- Yarn
+Node.js 20+, TypeScript, Express, Prisma ORM, PostgreSQL, Docker e Docker Compose, Yarn.
 
 ## 📋 Pré-requisitos
 
-Antes de executar o projeto, é necessário ter instalado:
+- Git
+- Node.js 20 ou superior
+- Yarn
+- Docker Desktop (aberto e pronto antes de subir os containers)
+- Um cliente HTTP (Insomnia, Postman ou Thunder Client)
 
-- [Node.js](https://nodejs.org/)
-- [Yarn](https://classic.yarnpkg.com/)
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+## ⚙️ Como rodar do zero
 
-## ⚙️ Configuração e instalação
-
-### 1. Clonar o repositório
+**1. Clone o repositório**
 
 ```bash
 git clone https://github.com/emilly-alexsandra/desafio-dev-citi.git
 cd desafio-dev-citi
 ```
 
-### 2. Configurar as variáveis de ambiente
+**2. Crie o `.env` a partir do exemplo**
 
-Crie um arquivo `.env` na raiz do projeto.
-
-Exemplo de configuração:
-
-```env
-PROJECT_NAME=treinamento-crud
-SERVER_PORT=3001
-
-DATABASE_TYPE=postgres
-DATABASE_HOST=treinamento-crud-db
-DATABASE_PORT=5432
-DATABASE_USER=postgres
-DATABASE_PASSWORD=sua_senha
-DATABASE_DB=treinamento-crud
-
-DATABASE_URL=${DATABASE_TYPE}://${DATABASE_USER}:${DATABASE_PASSWORD}@${DATABASE_HOST}:${DATABASE_PORT}/${DATABASE_DB}
+```bash
+cp .env.example .env
 ```
 
-A variável `DATABASE_URL` é utilizada pelo Prisma para estabelecer a conexão com o PostgreSQL e é montada a partir das demais variáveis de ambiente.
+No Windows PowerShell:
 
-**Importante:** o arquivo `.env` contém configurações locais e credenciais de acesso. Ele não deve ser enviado ao repositório.
+```powershell
+Copy-Item .env.example .env
+```
 
-### 3. Iniciar os containers
+Os valores do `.env.example` já funcionam para rodar com Docker. O `.env` não é enviado ao repositório.
 
-Com o Docker Desktop aberto, execute:
+**3. Instale as dependências**
+
+```bash
+yarn
+```
+
+**4. Suba os containers (API e PostgreSQL)**
 
 ```bash
 docker compose up -d --build
 ```
 
-Esse comando constrói a imagem da aplicação e inicia os containers da API e do PostgreSQL.
-
-### 4. Executar as migrations
-
-No terminal do projeto, execute:
+**5. Aplique as migrations já versionadas**
 
 ```bash
-yarn migration
+yarn migration:deploy
 ```
 
-Esse comando cria e aplica as migrations do banco de dados em ambiente de desenvolvimento.
+Esse comando aplica as migrations existentes no banco de dados, sem criar uma nova. A migration da entidade `Planta` já está versionada em `prisma/migrations`.
 
-Após a inicialização, a API estará disponível em:
+**6. Acesse a API**
 
-`http://localhost:3001`
+```text
+http://localhost:3001
+```
+
+Para acompanhar os logs dos containers:
+
+```bash
+docker compose logs -f server
+```
+
+Para visualizar e gerenciar os dados do banco com o Prisma Studio:
+
+```bash
+yarn studio
+```
 
 ## 🌱 Modelo de dados — Planta
 
 | Campo | Tipo | Descrição |
 |---|---|---|
-| id | Int | Identificador único |
-| nome | String | Nome da planta |
-| especie | String | Espécie da planta |
-| preco | Int | Preço em centavos |
-| estoque | Int | Quantidade disponível |
-| luminosidade | Luminosidade | Necessidade de luz |
-| petFriendly | Boolean | Indica se é segura para animais |
-| regaACadaDias | Int | Intervalo de rega em dias |
-| createdAt | DateTime | Data de criação |
-| updatedAt | DateTime | Data da última atualização |
+| `id` | Int (autoincrement) | Identificador, gerado pelo banco |
+| `nome` | String | Nome popular (ex.: "Costela-de-adão") |
+| `especie` | String | Nome científico (ex.: "Monstera deliciosa") |
+| `preco` | Int | Preço em **centavos** (`8990` = R$ 89,90) |
+| `estoque` | Int | Vasos disponíveis |
+| `luminosidade` | Enum `Luminosidade` | Necessidade de luz |
+| `petFriendly` | Boolean | Segura para cães e gatos? |
+| `regaACadaDias` | Int | Intervalo de rega, em dias |
+| `createdAt` | DateTime | Preenchido automaticamente |
+| `updatedAt` | DateTime | Atualizado automaticamente |
 
-### Valores de luminosidade
+Valores aceitos para `luminosidade`: `SOMBRA`, `MEIA_SOMBRA` e `SOL_PLENO`.
 
-O campo `luminosidade` aceita os seguintes valores:
+O preço é guardado em centavos (inteiro) para evitar erros de arredondamento de decimais.
 
-- `SOMBRA`
-- `MEIA_SOMBRA`
-- `SOL_PLENO`
-
-## 🔗 Endpoints
+## 📡 Rotas
 
 Base URL: `http://localhost:3001`
 
-### 1. Cadastrar planta
+Em todos os erros, a API responde com o status HTTP adequado e uma mensagem em JSON.
 
-**POST** `/plantas`
+### 1. Cadastrar planta — `POST /plantas`
 
-Exemplo de requisição:
+Todos os campos são obrigatórios.
+
+Requisição:
 
 ```json
 {
-  "nome": "Costela-de-Adão",
-  "especie": "Monstera deliciosa",
-  "preco": 5000,
+  "nome": "Jiboia",
+  "especie": "Epipremnum aureum",
+  "preco": 3000,
   "estoque": 10,
   "luminosidade": "MEIA_SOMBRA",
   "petFriendly": false,
@@ -137,66 +129,123 @@ Exemplo de requisição:
 }
 ```
 
-Todos os campos são obrigatórios no cadastro.
-
-### 2. Listar plantas
-
-**GET** `/plantas`
-
-Retorna a lista de plantas cadastradas.
-
-Também permite filtrar por luminosidade e característica pet friendly.
-
-Exemplos:
-
-```http
-GET /plantas?luminosidade=MEIA_SOMBRA
-```
-
-```http
-GET /plantas?petFriendly=false
-```
-
-### 3. Buscar planta por ID
-
-**GET** `/plantas/:id`
-
-Exemplo:
-
-```http
-GET /plantas/1
-```
-
-### 4. Atualizar planta
-
-**PATCH** `/plantas/:id`
-
-Permite atualizar parcialmente os dados de uma planta.
-
-Exemplo de requisição:
+Resposta `201 Created`:
 
 ```json
 {
-  "preco": 6000,
+  "id": 1,
+  "nome": "Jiboia",
+  "especie": "Epipremnum aureum",
+  "preco": 3000,
+  "estoque": 10,
+  "luminosidade": "MEIA_SOMBRA",
+  "petFriendly": false,
+  "regaACadaDias": 7,
+  "createdAt": "2026-10-30T12:00:00.000Z",
+  "updatedAt": "2026-10-30T12:00:00.000Z"
+}
+```
+
+Erros:
+
+- `400`: campo ausente, corpo vazio ou com valor inválido (ex.: `preco` igual a 0, `estoque` negativo, `preco` como texto, `luminosidade` fora do enum).
+- `500`: erro interno inesperado.
+
+### 2. Listar plantas — `GET /plantas`
+
+Filtros opcionais, sozinhos ou combinados:
+
+```text
+GET /plantas?luminosidade=MEIA_SOMBRA
+GET /plantas?petFriendly=false
+GET /plantas?luminosidade=MEIA_SOMBRA&petFriendly=false
+```
+
+Resposta `200 OK`:
+
+```json
+[
+  {
+    "id": 1,
+    "nome": "Jiboia",
+    "especie": "Epipremnum aureum",
+    "preco": 3000,
+    "estoque": 10,
+    "luminosidade": "MEIA_SOMBRA",
+    "petFriendly": false,
+    "regaACadaDias": 7,
+    "createdAt": "2026-10-30T12:00:00.000Z",
+    "updatedAt": "2026-10-30T12:00:00.000Z"
+  }
+]
+```
+
+Um filtro válido sem resultados retorna `200` com `[]` (nunca `404`).
+
+Erros:
+
+- `400`: filtro com valor inválido (ex.: `?luminosidade=LUA` ou `?petFriendly=talvez`).
+- `500`: erro interno inesperado.
+
+### 3. Buscar planta por ID — `GET /plantas/:id`
+
+Resposta `200 OK`: o objeto da planta, no mesmo formato do cadastro.
+
+Erros:
+
+- `400`: id inválido (ex.: `/plantas/abc`).
+- `404`: não existe planta com esse id.
+- `500`: erro interno inesperado.
+
+### 4. Atualizar planta — `PATCH /plantas/:id`
+
+Altera somente os campos enviados. Os campos enviados passam pelas mesmas regras do cadastro. Campos que não fazem parte da planta são ignorados.
+
+Requisição:
+
+```json
+{
+  "preco": 3500,
   "estoque": 15
 }
 ```
 
-### 5. Excluir planta
+Resposta `200 OK`: a planta atualizada, com os demais campos inalterados.
 
-**DELETE** `/plantas/:id`
-
-Exemplo:
-
-```http
-DELETE /plantas/1
+```json
+{
+  "id": 1,
+  "nome": "Jiboia",
+  "especie": "Epipremnum aureum",
+  "preco": 3500,
+  "estoque": 15,
+  "luminosidade": "MEIA_SOMBRA",
+  "petFriendly": false,
+  "regaACadaDias": 7,
+  "createdAt": "2026-10-30T12:00:00.000Z",
+  "updatedAt": "2026-10-30T12:30:00.000Z"
+}
 ```
 
-### 6. Registrar venda
+Erros:
 
-**POST** `/plantas/:id/venda`
+- `400`: id inválido, corpo vazio ou sem nenhum campo válido, ou valor inválido.
+- `404`: não existe planta com esse id.
+- `500`: erro interno inesperado.
 
-Exemplo de requisição:
+### 5. Excluir planta — `DELETE /plantas/:id`
+
+Resposta `204 No Content`, sem corpo.
+
+Erros:
+
+- `400`: id inválido.
+- `404`: não existe planta com esse id (inclusive ao excluir a mesma planta duas vezes).
+- `500`: erro interno inesperado.
+
+### 6. Registrar venda — `POST /plantas/:id/venda`
+
+Requisição:
 
 ```json
 {
@@ -204,118 +253,182 @@ Exemplo de requisição:
 }
 ```
 
-A venda verifica a disponibilidade em estoque e atualiza a quantidade automaticamente.
-
-Em caso de venda realizada, a resposta informa a planta atualizada e a quantidade vendida.
-
-Caso o estoque seja insuficiente, a API retorna HTTP 400.
-
-### 7. Consultar valor total do estoque
-
-**GET** `/plantas/estoque/valor-total`
-
-Retorna o valor financeiro total do estoque e a quantidade total de vasos disponíveis.
-
-Exemplo de resposta:
+Resposta `200 OK`: a planta atualizada, já com o estoque após a venda (exemplo com estoque inicial de 10):
 
 ```json
 {
-  "valorTotalEmCentavos": 50000,
-  "totalDeVasos": 10
+  "id": 1,
+  "nome": "Jiboia",
+  "especie": "Epipremnum aureum",
+  "preco": 3000,
+  "estoque": 8,
+  "luminosidade": "MEIA_SOMBRA",
+  "petFriendly": false,
+  "regaACadaDias": 7,
+  "createdAt": "2026-10-30T12:00:00.000Z",
+  "updatedAt": "2026-10-30T12:45:00.000Z"
 }
 ```
 
-O valor total é calculado pela soma do preço de cada planta multiplicado pela respectiva quantidade em estoque.
+Erros:
 
-## ⚠️ Validações e tratamento de erros
+- `400`: id inválido, corpo vazio, `quantidade` que não seja inteiro maior que zero (ex.: `0`, `-1`, `1.5`, `"2"`) ou estoque insuficiente. Nesse último caso, nada é alterado.
+- `404`: não existe planta com esse id.
+- `500`: erro interno inesperado.
 
-A API realiza validações para garantir a integridade dos dados:
+Exemplo de resposta `400 Bad Request` quando o estoque é insuficiente:
 
-- Todos os campos são obrigatórios no cadastro.
-- O preço deve ser maior que zero.
-- O estoque não pode ser negativo.
-- O intervalo de rega deve ser maior ou igual a um dia.
-- A luminosidade deve corresponder a um dos valores definidos no enum.
-- A quantidade de uma venda deve ser um número inteiro positivo.
-- Não é permitido vender uma quantidade superior ao estoque disponível.
-- IDs inexistentes são tratados pela API.
+```json
+{
+  "message": "Estoque insuficiente.",
+  "estoqueDisponivel": 1
+}
+```
 
-### Principais códigos HTTP
+O campo `estoqueDisponivel` informa quantas unidades ainda estão disponíveis no momento da tentativa de venda.
 
-| Código | Significado |
+### 7. Valor total do estoque — `GET /plantas/estoque/valor-total`
+
+Soma `preco × estoque` de todas as plantas e o total de vasos.
+
+Resposta `200 OK`:
+
+```json
+{
+  "valorTotalEmCentavos": 24000,
+  "totalDeVasos": 8
+}
+```
+
+Com a loja vazia, a resposta é `200` com os valores zerados:
+
+```json
+{
+  "valorTotalEmCentavos": 0,
+  "totalDeVasos": 0
+}
+```
+
+Erros:
+
+- `500`: erro interno inesperado.
+
+## ⚠️ Validações
+
+| Campo ou operação | Regra |
 |---|---|
-| 200 | Operação realizada com sucesso |
-| 201 | Recurso criado com sucesso |
-| 400 | Dados inválidos ou estoque insuficiente |
-| 404 | Recurso não encontrado |
-| 500 | Erro interno do servidor |
+| `nome`, `especie` | Texto não vazio |
+| `preco` | Inteiro maior que zero |
+| `estoque` | Inteiro maior ou igual a zero (zero é válido) |
+| `luminosidade` | Um dos valores do enum |
+| `petFriendly` | Booleano (`false` é válido) |
+| `regaACadaDias` | Inteiro maior ou igual a 1 |
+| `quantidade` da venda | Inteiro maior que zero |
+| `:id` da rota | Inteiro maior que zero |
 
-## 🔒 Controle de concorrência
+No cadastro, todos os campos são obrigatórios. Na edição, nenhum é, mas os enviados seguem as mesmas regras. Os tipos são conferidos explicitamente: `"preco": "8990"` (texto) é recusado.
 
-O registro de vendas utiliza uma operação atômica de atualização do estoque com Prisma.
+Requisições sem corpo nos endpoints de cadastro, edição e venda são tratadas como dados inválidos, retornando `400 Bad Request`.
 
-A atualização ocorre somente quando a quantidade disponível é suficiente para atender à venda.
+### Códigos HTTP
 
-Essa abordagem evita que requisições simultâneas vendam mais unidades do que existem em estoque.
+| Código | Quando |
+|---|---|
+| `200` | Sucesso em consulta, edição, venda e valor total |
+| `201` | Planta cadastrada |
+| `204` | Planta excluída |
+| `400` | Dados inválidos, id inválido, filtro inválido ou estoque insuficiente |
+| `404` | Id válido, mas planta inexistente |
+| `500` | Erro interno inesperado |
 
-### Teste de concorrência realizado
+## 🔒 Decisões técnicas
 
-Considerando uma planta com estoque inicial de 5 unidades, foram disparadas simultaneamente duas requisições de venda de 4 unidades cada.
+### Vendas simultâneas
 
-Resultado validado:
+Se duas pessoas comprarem o último vaso ao mesmo tempo, apenas uma venda pode ser concluída. Para garantir isso, a venda usa uma **atualização condicional dentro de uma transação do Prisma** (`updateMany`): o decremento só acontece se, no momento da atualização, o estoque ainda for maior ou igual à quantidade pedida. Assim, a verificação e a alteração acontecem juntas no banco, sem janela para duas requisições lerem o mesmo estoque.
 
-- Primeira venda: HTTP 200.
-- Segunda venda: HTTP 400 — estoque insuficiente.
-- Estoque final: 1 unidade.
+Teste realizado: planta com 5 unidades e duas vendas de 4 unidades disparadas ao mesmo tempo. Resultado: uma retornou `200`, a outra `400` (estoque insuficiente), e o estoque final ficou em 1 unidade.
+
+### Organização em camadas
+
+- `routes.ts`: liga cada URL ao controller.
+- Controllers: leem a requisição, validam, aplicam as regras e escolhem o status.
+- Repositories: única camada que conversa com o Prisma.
+
+### IDs
+
+Um id mal formado (`abc`) retorna `400`. Um id válido que não existe retorna `404`.
+
+## 🧪 Testes realizados
+
+Testes manuais com cliente HTTP, cobrindo:
+
+- Cadastro válido, inclusive com `estoque: 0` e `petFriendly: false`.
+- Cadastro com campo ausente, `preco: 0`, `estoque: -1`, `preco` como texto e `luminosidade` inválida.
+- Busca por id existente, inexistente e inválido.
+- Edição só do preço, com valor inválido e com id inexistente.
+- Filtros por luminosidade, por `petFriendly`, pelos dois e filtro inválido.
+- Venda com estoque suficiente, com estoque insuficiente (estoque inalterado) e com `quantidade: 0`.
+- Valor total do estoque, conferido manualmente.
+- Exclusão, nova busca e nova exclusão da mesma planta.
+- Duas vendas simultâneas (descrito acima).
+
+A verificação de tipos também foi executada:
+
+```bash
+yarn typecheck
+```
 
 ## 📁 Estrutura do projeto
 
 ```text
 desafio-dev-citi/
-│
 ├── prisma/
 │   ├── migrations/
 │   └── schema.prisma
-│
 ├── src/
 │   ├── controllers/
 │   │   ├── PlantaController.ts
 │   │   └── UserController.ts
-│   │
 │   ├── database/
 │   │   └── index.ts
-│   │
 │   ├── repositories/
 │   │   ├── PlantaRepository.ts
 │   │   └── UserRepository.ts
-│   │
 │   ├── routes.ts
 │   └── server.ts
-│
 ├── .env.example
-├── .gitignore
 ├── Dockerfile
 ├── docker-compose.yml
 ├── package.json
-├── tsconfig.json
-└── README.md
+└── tsconfig.json
 ```
 
-## 🧪 Scripts disponíveis
+(Arquivos de configuração menores, como `.dockerignore` e `.swcrc`, foram omitidos.)
+
+## 🧰 Scripts
 
 | Comando | Descrição |
 |---|---|
-| `yarn dev` | Inicia o ambiente de desenvolvimento |
-| `yarn generate` | Gera o Prisma Client |
-| `yarn migration` | Executa migrations em desenvolvimento |
+| `yarn migration` | Cria e aplica migrations em desenvolvimento |
 | `yarn migration:deploy` | Aplica migrations existentes |
+| `yarn generate` | Gera o Prisma Client |
 | `yarn studio` | Abre o Prisma Studio |
 | `yarn typecheck` | Verifica os tipos do TypeScript |
 | `yarn build` | Compila a aplicação |
 | `yarn start` | Inicia a aplicação compilada |
 
-No Windows PowerShell, os comandos Yarn podem ser executados com o prefixo `yarn.cmd`.
+No Windows PowerShell, os comandos Yarn também podem ser executados com `yarn.cmd`.
+
+## 🎯 Bônus
+
+**Nenhum bônus foi implementado.** Priorizei concluir e testar todos os requisitos obrigatórios. Ficaram de fora:
+
+- Busca por nome sem diferenciar maiúsculas e minúsculas (`?nome=`).
+- Ordenação (`?ordem=preco` ou `?ordem=nome`).
+- Rota `GET /plantas/esgotadas`.
+- Script de seed com plantas de exemplo.
 
 ## 👩‍💻 Autoria
 
-Desenvolvido por **Emilly Alexsandra** como parte do desafio técnico do CITi — UFPE.
+Desenvolvido por **Emilly Alexsandra**.
